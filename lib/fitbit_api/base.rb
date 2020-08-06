@@ -17,7 +17,7 @@ module FitbitAPI
   define_setting :locale,          'en_US'
   define_setting :scope,           'activity nutrition profile settings sleep social weight heartrate'
 
-  define_setting :api_version,     '1'
+  define_setting :api_version,     '1.2'
 
   define_setting :snake_case_keys, false
   define_setting :symbolize_keys,  false
