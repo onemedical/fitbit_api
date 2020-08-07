@@ -7,6 +7,7 @@ module FitbitAPI
 
     # GET user/[user-id]/sleep/date/[startDate]/[endDate].json
     def sleep_time_series(opts = {})
+      opts[:api_version] = "1.2"
       start_date = opts[:start_date]
       end_date   = opts[:end_date] || Date.today
 
