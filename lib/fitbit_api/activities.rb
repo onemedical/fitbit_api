@@ -188,7 +188,7 @@ module FitbitAPI
     #
     # ==== Parameters
     # * +:period+ - 'daily' or 'weekly'
-    def get_activity_goals(period)
+    def activity_goals(period)
       if ACTIVITY_GOAL_PERIODS.include? period.to_s
         get("user/#{user_id}/activities/goals/#{period}.json")
       else

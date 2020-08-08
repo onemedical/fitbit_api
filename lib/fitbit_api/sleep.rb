@@ -50,9 +50,11 @@ module FitbitAPI
     # Update Sleep Goal
     #
     # ==== POST Parameters
-    # * +:minDuration+ - duration in minutes
+    # * +:minDuration+ - required - duration in minutes
+    # * +:bedtime+ - optional - time sleep by - formatted as 'HH:mm'
+    # * +:wakeupTime+ - optional - time wake up by - formatted as 'HH:mm'
     #
-    def set_sleep_goal(opts = {})
+    def update_sleep_goal(opts = {})
       post("user/#{user_id}/sleep/goal.json", opts)
     end
   end
