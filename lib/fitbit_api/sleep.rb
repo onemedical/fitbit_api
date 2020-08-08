@@ -38,5 +38,22 @@ module FitbitAPI
 
       result.values[0]
     end
+
+    # GET https://api.fitbit.com/1/user/[user-id]/sleep/goal.json
+    # Get Sleep Goal
+    #
+    def sleep_goal
+      get("user/#{user_id}/sleep/goal.json")
+    end
+
+    # POST https://api.fitbit.com/1/user/[user-id]/sleep/goal.json
+    # Update Sleep Goal
+    #
+    # ==== POST Parameters
+    # * +:minDuration+ - duration in minutes
+    #
+    def set_sleep_goal(opts = {})
+      post("user/#{user_id}/sleep/goal.json", opts)
+    end
   end
 end
