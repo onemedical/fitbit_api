@@ -11,6 +11,10 @@ module FitbitAPI
 
     ACTIVITY_INTRADAY_RESOURCES = %w(calories steps distance floors elevation)
 
+    ACTIVITY_GOAL_PERIODS = %w(daily weekly)
+
+    ACTIVITY_GOAL_RESOURCES = %w(distance steps floors activeMinutes caloriesOut)
+
     # GET Activities
     # ==============
 
@@ -177,6 +181,43 @@ module FitbitAPI
 
     def delete_favorite_activity(activity_id)
       delete("user/#{user_id}/activities/favorite/#{activity_id}.json")
+    end
+
+    # GET https://api.fitbit.com/1/user/[user-id]/activities/goals/[period].json
+    # Get Activity Goals
+    #
+    # ==== Parameters
+    # * +:period+ - 'daily' or 'weekly'
+    def activity_goals(period)
+      if ACTIVITY_GOAL_PERIODS.include? period.to_s
+        get("user/#{user_id}/activities/goals/#{period}.json")
+      else
+        raise FitbitAPI::InvalidArgumentError, "Invalid period: \"#{period}\". Please provide one of the following: #{ACTIVITY_GOAL_PERIODS}."
+      end
+    end
+
+    # POST https://api.fitbit.com/1/user/[user-id]/activities/goals/[period].json
+    # Update Activity Goals
+    #
+    # ==== Parameters
+    # * +:period+ - 'daily' or 'weekly'
+    #
+    # ==== POST Parameters
+    # * +:caloriesOut+ - optional	Goal value; integer.
+    # * +:activeMinutes+ - optional	Goal value; integer.
+    # * +:floors+ - optional Goal value; integer.
+    # * +:distance+ - optional Goal value; in the format X.XX or integer.
+    # * +:steps+ - optional	Goal value; integer.
+    def update_activity_goals(period, opts)
+      unless ACTIVITY_GOAL_PERIODS.include? period.to_s
+        raise FitbitAPI::InvalidArgumentError, "Invalid period: \"#{period}\". Please provide one of the following: #{ACTIVITY_GOAL_PERIODS}."
+      end
+
+      if opts.keys.select{ |metric| !ACTIVITY_GOAL_RESOURCES.include? metric.to_s }.none? || !opts.empty?
+        post("user/#{user_id}/activities/goals/#{period}.json", opts)
+      else
+        raise FitbitAPI::InvalidArgumentError, "Invalid goal metrics detected: \"#{opts}\". Please provide one or more of the following: #{ACTIVITY_GOAL_RESOURCES}."
+      end
     end
   end
 end

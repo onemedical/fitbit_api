@@ -1,36 +1,61 @@
 module FitbitAPI
   class Client
-    SLEEP_RESOURCES = %w(startTime timeInBed minutesAsleep awakeningsCount
-                         minutesAwake minutesToFallAsleep minutesAfterWakeup efficiency)
+    API_VERSION = '1.2'
 
-    def sleep_logs(date=Date.today, opts={})
+    # GET user/[user-id]/sleep/date/[date].json
+    def sleep_logs(date = Date.today, opts = {})
+      opts[:api_version] = API_VERSION
       get("user/#{user_id}/sleep/date/#{format_date(date)}.json", opts)
     end
 
-    def sleep_time_series(resource, opts={})
+    # GET user/[user-id]/sleep/date/[startDate]/[endDate].json
+    def sleep_time_series(opts = {})
+      opts[:api_version] = API_VERSION
       start_date = opts[:start_date]
       end_date   = opts[:end_date] || Date.today
-      period     = opts[:period]
 
-      unless SLEEP_RESOURCES.include?(resource)
-        raise FitbitAPI::InvalidArgumentError, "Invalid resource: \"#{resource}\". Please provide one of the following: #{SLEEP_RESOURCES}."
-      end
-
-      if [period, start_date].none?
+      if [start_date].none?
         raise FitbitAPI::InvalidArgumentError, 'A start_date or period is required.'
       end
 
-      if period && !PERIODS.include?(period)
-        raise FitbitAPI::InvalidArgumentError, "Invalid period: \"#{period}\". Please provide one of the following: #{PERIODS}."
-      end
+      result = get("user/#{user_id}/sleep/date/#{format_date(start_date)}/#{format_date(end_date)}.json", opts)
 
-      if period
-        result = get("user/#{user_id}/activities/#{resource}/date/#{format_date(end_date)}/#{period}.json", opts)
-      else
-        result = get("user/#{user_id}/activities/#{resource}/date/#{format_date(start_date)}/#{format_date(end_date)}.json", opts)
-      end
-      # remove root key from response
       result.values[0]
+    end
+
+    # POST https://api.fitbit.com/1.2/user/[user-id]/sleep.json
+    # Log Sleep Record
+    #
+    # ==== POST Parameters
+    # * +:startTime+ - activity start time; formatted in HH:mm:ss
+    # * +:duration+ - duration in milliseconds
+    # * +:date+ - log entry date; formatted in yyyy-MM-dd
+    #
+    def log_sleep(opts = {})
+      opts[:api_version] = API_VERSION
+
+      result = post("user/#{user_id}/sleep.json", opts)
+
+      result.values[0]
+    end
+
+    # GET https://api.fitbit.com/1/user/[user-id]/sleep/goal.json
+    # Get Sleep Goal
+    #
+    def sleep_goal
+      get("user/#{user_id}/sleep/goal.json")
+    end
+
+    # POST https://api.fitbit.com/1/user/[user-id]/sleep/goal.json
+    # Update Sleep Goal
+    #
+    # ==== POST Parameters
+    # * +:minDuration+ - required - duration in minutes
+    # * +:bedtime+ - optional - time sleep by - formatted as 'HH:mm'
+    # * +:wakeupTime+ - optional - time wake up by - formatted as 'HH:mm'
+    #
+    def update_sleep_goal(opts = {})
+      post("user/#{user_id}/sleep/goal.json", opts)
     end
   end
 end
