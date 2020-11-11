@@ -3,10 +3,15 @@ module FitbitAPI
     BODY_RESOURCES = %w(bmi fat weight)
 
     def weight_logs(opts={})
-      period_template = "user/%{user_id}/body/log/weight/date/%{start_date}/%{period}.json"
-      range_template = "user/%{user_id}/body/log/weight/date/%{start_date}/%{end_date}.json"
+      endpoint_templates = {
+        period: "user/%{user_id}/body/log/weight/date/%{start_date}/%{period}.json",
+        range: "user/%{user_id}/body/log/weight/date/%{start_date}/%{end_date}.json"
+      }
+      opts = {
+        resource: "weight"
+      }.merge(opts)
 
-      time_series('weight', period_template, range_template, opts)
+      time_series(endpoint_templates, opts)
     end
 
     def body_fat_logs(date=Date.today, opts={})
@@ -18,10 +23,15 @@ module FitbitAPI
         raise FitbitAPI::InvalidArgumentError, "Invalid resource: \"#{resource}\". Please provide one of the following: #{BODY_RESOURCES}."
       end
 
-      period = "user/%{user_id}/body/%{resource}/date/%{end_date}/%{period}.json"
-      range = "user/%{user_id}/body/%{resource}/date/%{start_date}/%{end_date}.json"
+      endpoint_templates = {
+        period: "user/%{user_id}/body/%{resource}/date/%{end_date}/%{period}.json",
+        range: "user/%{user_id}/body/%{resource}/date/%{start_date}/%{end_date}.json"
+      }
+      opts = {
+        resource: resource
+      }.merge(opts)
 
-      result = time_series(resource, period, range, opts)
+      result = time_series(endpoint_templates, opts)
 
       # remove root key from response
       result.values[0]
@@ -43,20 +53,21 @@ module FitbitAPI
       delete("user/#{user_id}/body/log/fat/#{body_fat_log_id}.json", opts)
     end
 
-    def time_series(resource, period_endpoint_template, range_endpoint_template, opts={})
+    def time_series(endpoint_templates, opts={})
       opts = {
         start_date: Date.today,
         end_date: Date.today,
       }.merge(opts)
 
       start_date = opts[:start_date]
-      end_date   = opts[:end_date]
-      period     = opts[:period]
+      end_date = opts[:end_date]
+      period = opts[:period]
+      resource = opts[:resource]
 
       if period
-        result = get(period_endpoint_template % { user_id: user_id, resource: resource, start_date: format_date(start_date), end_date: format_date(end_date), period: period }, opts)
+        result = get(endpoint_templates[:period] % { user_id: user_id, resource: resource, start_date: format_date(start_date), end_date: format_date(end_date), period: period }, opts)
       else
-        result = get(range_endpoint_template % { user_id: user_id, resource: resource, start_date: format_date(start_date), end_date: format_date(end_date) }, opts)
+        result = get(endpoint_templates[:range] % { user_id: user_id, resource: resource, start_date: format_date(start_date), end_date: format_date(end_date) }, opts)
       end
 
       if [period, start_date].none?
