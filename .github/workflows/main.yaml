@@ -27,8 +27,15 @@ jobs:
 
     - name: Bundle Install
       run: |
-        bundle install
+        gem install bundler -v '1.17.3'
+        bundle install --jobs 4 --retry 3
 
     - name: Run tests
       run: |
-        bundle exec rake
+        COVERAGE=true bundle exec rspec
+    - name: Upload coverage results
+      uses: actions/upload-artifact@master
+      if: always()
+      with:
+        name: coverage-report
+        path: coverage
