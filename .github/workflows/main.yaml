@@ -1,0 +1,34 @@
+name: Main
+
+on: [push]
+
+jobs:
+  vm-job:
+    runs-on: ubuntu-latest
+
+    # https://help.github.com/en/articles/workflow-syntax-for-github-actions#jobsjob_idstrategymatrix
+    strategy:
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Ruby
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: '2.6'
+
+    - uses: actions/cache@v1
+      with:
+        path: vendor/bundle
+        key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-gems-
+
+    - name: Bundle Install
+      run: |
+        bundle install
+
+    - name: Run tests
+      run: |
+        bundle exec rake
