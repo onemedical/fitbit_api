@@ -2,8 +2,16 @@ module FitbitAPI
   class Client
     BODY_RESOURCES = %w(bmi fat weight)
 
-    def weight_logs(date=Date.today, opts={})
-      get("user/-/body/log/weight/date/#{format_date(date)}.json", opts)
+    def weight_logs(opts={})
+      endpoint_templates = {
+        period: "user/%{user_id}/body/log/weight/date/%{start_date}/%{period}.json",
+        range: "user/%{user_id}/body/log/weight/date/%{start_date}/%{end_date}.json"
+      }
+      opts = {
+        resource: "weight"
+      }.merge(opts)
+
+      time_series(endpoint_templates, opts)
     end
 
     def body_fat_logs(date=Date.today, opts={})
@@ -11,27 +19,20 @@ module FitbitAPI
     end
 
     def body_time_series(resource, opts={})
-      start_date = opts[:start_date]
-      end_date   = opts[:end_date] || Date.today
-      period     = opts[:period]
-
       unless BODY_RESOURCES.include?(resource)
         raise FitbitAPI::InvalidArgumentError, "Invalid resource: \"#{resource}\". Please provide one of the following: #{BODY_RESOURCES}."
       end
 
-      if [period, start_date].none?
-        raise FitbitAPI::InvalidArgumentError, 'A start_date or period is required.'
-      end
+      endpoint_templates = {
+        period: "user/%{user_id}/body/%{resource}/date/%{end_date}/%{period}.json",
+        range: "user/%{user_id}/body/%{resource}/date/%{start_date}/%{end_date}.json"
+      }
+      opts = {
+        resource: resource
+      }.merge(opts)
 
-      if period && !PERIODS.include?(period)
-        raise FitbitAPI::InvalidArgumentError, "Invalid period: \"#{period}\". Please provide one of the following: #{PERIODS}."
-      end
+      result = time_series(endpoint_templates, opts)
 
-      if period
-        result = get("user/#{user_id}/body/#{resource}/date/#{format_date(end_date)}/#{period}.json", opts)
-      else
-        result = get("user/#{user_id}/body/#{resource}/date/#{format_date(start_date)}/#{format_date(end_date)}.json", opts)
-      end
       # remove root key from response
       result.values[0]
     end
@@ -50,6 +51,39 @@ module FitbitAPI
 
     def delete_body_fat_log(body_fat_log_id, opts={})
       delete("user/#{user_id}/body/log/fat/#{body_fat_log_id}.json", opts)
+    end
+
+    def time_series(endpoint_templates, opts={})
+      request = time_series_request(endpoint_templates, opts)
+      result = get(request, opts)
+    end
+
+    def time_series_request(endpoint_templates, opts={})
+      opts = {
+        start_date: Date.today,
+        end_date: Date.today,
+      }.merge(opts)
+
+      start_date = opts[:start_date]
+      end_date = opts[:end_date]
+      period = opts[:period]
+      resource = opts[:resource]
+
+      if [period, start_date].none?
+        raise FitbitAPI::InvalidArgumentError, 'A start_date or period is required.'
+      end
+
+      if period && !PERIODS.include?(period)
+        raise FitbitAPI::InvalidArgumentError, "Invalid period: \"#{period}\". Please provide one of the following: #{PERIODS}."
+      end
+
+      if period
+        request = endpoint_templates[:period] % { user_id: user_id, resource: resource, start_date: format_date(start_date), end_date: format_date(end_date), period: period }
+      else
+        request = endpoint_templates[:range] % { user_id: user_id, resource: resource, start_date: format_date(start_date), end_date: format_date(end_date) }
+      end
+
+      request
     end
   end
 end
