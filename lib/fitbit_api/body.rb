@@ -54,6 +54,11 @@ module FitbitAPI
     end
 
     def time_series(endpoint_templates, opts={})
+      request = time_series_request(endpoint_templates, opts)
+      result = get(request, opts)
+    end
+
+    def time_series_request(endpoint_templates, opts={})
       opts = {
         start_date: Date.today,
         end_date: Date.today,
@@ -64,12 +69,6 @@ module FitbitAPI
       period = opts[:period]
       resource = opts[:resource]
 
-      if period
-        result = get(endpoint_templates[:period] % { user_id: user_id, resource: resource, start_date: format_date(start_date), end_date: format_date(end_date), period: period }, opts)
-      else
-        result = get(endpoint_templates[:range] % { user_id: user_id, resource: resource, start_date: format_date(start_date), end_date: format_date(end_date) }, opts)
-      end
-
       if [period, start_date].none?
         raise FitbitAPI::InvalidArgumentError, 'A start_date or period is required.'
       end
@@ -78,7 +77,13 @@ module FitbitAPI
         raise FitbitAPI::InvalidArgumentError, "Invalid period: \"#{period}\". Please provide one of the following: #{PERIODS}."
       end
 
-      result
+      if period
+        request = endpoint_templates[:period] % { user_id: user_id, resource: resource, start_date: format_date(start_date), end_date: format_date(end_date), period: period }
+      else
+        request = endpoint_templates[:range] % { user_id: user_id, resource: resource, start_date: format_date(start_date), end_date: format_date(end_date) }
+      end
+
+      request
     end
   end
 end
