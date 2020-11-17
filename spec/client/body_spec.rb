@@ -33,4 +33,11 @@ describe FitbitAPI::Client do
       expect(client.time_series_request(test_templates, opts)).to eq(expected)
     end
   end
+  describe "#weight_logs" do
+    it "makes a time_series request" do
+      time_series_double = double(FitbitAPI::Client, :time_series => true)
+      expect(client).to receive(:time_series).with(anything, hash_including(:resource=> "weight"))
+      client.weight_logs({})
+    end
+  end
 end
